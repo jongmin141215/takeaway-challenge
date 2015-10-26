@@ -30,37 +30,43 @@ describe Order do
     expect(subject.orders).to eq([])
   end
 
-  describe "#pay(price)" do
+  describe "#pay(price, customer)" do
     let(:customer) { double :customer, name: 'Jongmin',
       phone_number: '+44 7497 811148'}
+    let(:text) { double :text, send_text_message: true}
+    subject(:order) { described_class.new(text) }
 
     before do
-      subject.choose_dish(menu, 'BBQ', 4)
-      subject.choose_dish(menu, 'Sushi', 4)
-      subject.checkout
-      allow(Text).to receive(:send_text_message).and_return(true)
+      order.choose_dish(menu, 'BBQ', 4)
+      order.choose_dish(menu, 'Sushi', 4)
+      order.checkout
     end
 
     it "sets :paid property to true" do
-      subject.pay(64, customer)
-      expect(subject.orders.first[:paid]).to be true
-      expect(subject.orders.last[:paid]).to be true
+      order.pay(64, customer)
+      expect(order.orders.first[:paid]).to be true
+      expect(order.orders.last[:paid]).to be true
     end
 
     it "doesn't place orders when you don't pay exact amount" do
-      expect { subject.pay(30, customer) }
+      expect { order.pay(30, customer) }
         .to raise_error('You are not paying the exact amount')
     end
 
     it 'stores the time you place an order' do
-      subject.pay(64, customer)
-      expect(subject.orders.first[:created_at])
+      order.pay(64, customer)
+      expect(order.orders.first[:created_at])
         .to eq(Time.now.strftime("%b %e, %Y %H:%M"))
     end
+  end
 
-    it 'sends customers text message when order is placed' do
-      expect(Text).to receive(:send_text_message)
-      subject.pay(64, customer)
-    end
+  it 'sends customers text message when order is placed' do
+    customer = double :customer, name: 'Jongmin',
+      phone_number: '+44 7497 811148'
+    subject.choose_dish(menu, 'BBQ', 4)
+    subject.choose_dish(menu, 'Sushi', 4)
+    subject.checkout
+    expect(Text).to receive(:send_text_message)
+    subject.pay(64, customer)
   end
 end
